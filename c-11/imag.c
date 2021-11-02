@@ -20,7 +20,8 @@ int main(void) {
 	return 0;
 }
 void get_input(Complex *px) {
-	scanf("%lf %lf", px->real, px->imag);
+	scanf("%lf ", px->real);
+	scanf("%lf",px->imag);
 }
 
 Complex complex_sum(Complex a, Complex b) {
