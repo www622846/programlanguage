@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include <Windows.h>	//system을 쓰기 위함
 #include <direct.h>		//mkdir()을 쓰기 위함
-#include <io.h>	//struct _finddata_t fd;를 써야함.
-
+#include <io.h>	//struct _finddata_t fd;를 써야함. 있어야지 폴더 내에 있는 파일 정보를 읽을 수 있음.
 
 struct date
 {
@@ -12,7 +11,7 @@ struct date
 	int day;
 	int year;
 };
-struct d_title	//Display Title
+struct d_title	//Display Title main_screen()에 필요한 구조체
 {
 	int id;
 	char title[100];
@@ -33,6 +32,8 @@ void write_file();
 const char* get_path_of_file(int input);
 void correct_file(int file_number);
 void remove_file();
+void array_setup(int delete_file_number);
+
 int file_count_func( char *path) {	//파일의 최대 개수
 	struct _finddata_t fd;
 	int result = -1;
@@ -71,7 +72,7 @@ const char* get_file_name_func( char *path, int total_file_count, int select_fil
 	if (handle == -1) {
 		printf("오류\n파일 없음\n");
 		return;
-	}r = 1;
+	}
 	int i = 0;
 	while (r != -1) {	//파일의 이름을 알아냄
 		if (strcmp(fd.name, ".") != 0 && strcmp(fd.name, "..") != 0) {
@@ -85,7 +86,7 @@ const char* get_file_name_func( char *path, int total_file_count, int select_fil
 			else	//파일 오류가 안 난다면
 			{
 				fread(&f_s, sizeof(FILE_SAMPLE), 1, fp);
-				////////////////////////////////printf("%s | %d\n", fd.name, f_s.prority);
+				/////////////////////printf("%s | %d\n", fd.name, f_s.prority);
 				if (f_s.prority == select_file_number) {	//선택한 우선순위가 파일 내 우선순위와 같다면
 					strcpy(result_string, fd.name);
 				}
@@ -93,16 +94,14 @@ const char* get_file_name_func( char *path, int total_file_count, int select_fil
 			}
 			fclose(fp);
 		}
-		r = _findnext(handle, &fd);
+		r = _findnext(handle, &fd);	//다음 파일로
 	}
-	_findclose(handle);
+	_findclose(handle);	//닫음
 	return result_string;
 }
 
-
-
 void start_screen(char *ch) {	//시작할 때 가장 먼저 실행하는 함수
-	system("mode con cols=140 lines=40");	//cmd창을 140 * 40 으로 맞춤
+	system("mode con cols=141 lines=40");	//cmd창을 140 * 40 으로 맞춤
 	int Result_Folder_crete = mkdir(folder_path);	//해당경로에 있는 해당폴더를 만드는 함수
 	if (Result_Folder_crete == 0) {
 		printf("폴더가 생성되지 않았습니다\n%s 폴더를 생성했습니다.", folder_path);
@@ -122,94 +121,155 @@ void start_screen(char *ch) {	//시작할 때 가장 먼저 실행하는 함수
 	char c;
 	c = getch();
 	*ch = c;
+	return;
 }
 
 void main_screen() {	//시작 후 일기장을 보여주는 함수
-	struct _finddata_t fd_;
-	system("cls");	//cmd창을 비움
-	struct date d = { 01,01,2021 };
-	struct d_title data[25];
-	char di_date[25][15];
+	struct date d = { 01,01,2021 };	//더미
+	struct d_title data[25];	//더미
+	char di_date[25][15];	//더미
 	char file_name[50];
-	char c;
 	FILE *fp;
+	struct _finddata_t fd_;
+	int Isclear = 1;
 	FILE_SAMPLE read_f_s;
-	int file_total_number = file_count_func(folder_path);
-	if (file_total_number != -1) {
-		for (int i = 0; i < file_total_number; i++) {
-			strcpy(file_name, get_path_of_file(i + 1));
-			if ((fp = fopen(file_name, "rb")) == NULL) {
-				printf("--main_screen--\n파일 읽기 오류!\n");
-				printf("%s\n", file_name);
-				exit(1);
-			}
-			fread(&read_f_s, sizeof(read_f_s), 1, fp);
-			fclose(fp);
-			data[i].id = read_f_s.prority;
-			strcpy(data[i].title, read_f_s.title);
-			char s[100];
-			data[i].d_date = d;
-			sprintf(di_date[i], "%d.%d.%d", data[i].d_date.year, data[i].d_date.month, data[i].d_date.day + i);
-		}
-	}
-	char de[3][5] = {
-		{"번호"},
-		{"제목"},
-		{"날짜"}
-	};
-	printf("%5s%2c%45s%55c%15s\n", de[0],'|', de[1],'|', de[2]);
-	for (int i = 0; i < 140; i++) {
-		printf("-");
-	}
-	printf("\n");
-	for (int i = 0; i < file_total_number; i++) {
-		printf("%4d%3c%50s%50c%17s\n", data[i].id, '|', data[i].title, '|', di_date[i]);//문자열 수정
-	}
-	printf("\n\n\t이전 : [\t다음 : ]\t만들기 : z\t읽기 : x\t삭제 : c\t해상도 초기화 : v\t종료 : b\n");
-	while (1)	//입력하는 문자를 입력받음.
+	char c;	//입력받게 하는 문자
+	int page = 0;
+	while (1)
 	{
+		int file_total_number = file_count_func(folder_path);
+		int setting_number = 0;
+		if (file_total_number > 25 * (page + 1)) {
+			setting_number = 25;
+		}
+		else
+		{
+			setting_number = file_total_number;
+		}
+		if(Isclear)
+		{
+			system("cls");	//cmd창을 비움
+			int se_nu = 0;
+
+			if (file_total_number > 25 * (file_total_number / 25)) {
+				se_nu = file_total_number - 25 * (file_total_number / 25);
+			}
+			else
+			{
+				printf("%d\n", 25 * (file_total_number / 25));
+				se_nu = file_total_number;
+			}
+			printf("%d\n", se_nu);
+			if (file_total_number != -1) {
+				for (int i = 0; i < file_total_number - 25 * page; i++) {
+					strcpy(file_name, get_path_of_file(i + 1 + page * 25));
+					if ((fp = fopen(file_name, "rb")) == NULL) {
+						printf("--main_screen--\n파일 읽기 오류!\n");
+						printf("%s\n", file_name);
+						exit(1);
+					}
+					fread(&read_f_s, sizeof(read_f_s), 1, fp);
+					fclose(fp);
+					data[i].id = read_f_s.prority;	//우선순위를 data[i].id로
+					strcpy(data[i].title, read_f_s.title);	//data[i].title에 제목을 복사
+					data[i].d_date = d;
+					sprintf(di_date[i], "%d.%d.%d", data[i].d_date.year, data[i].d_date.month, data[i].d_date.day + i);
+				}
+			}
+			char de[3][5] = {
+				{"번호"},
+				{"제목"},
+				{"날짜"}
+			};
+			printf("%5s%2c%45s%55c%15s\n", de[0], '|', de[1], '|', de[2]);	//틀 만듦
+			for (int i = 0; i < 140; i++) {
+				printf("-");
+			}
+			printf("\n");
+			for (int i = page * 25; i < setting_number; i++) {//문자열 나열
+				printf("%4d%3c ", data[i].id, '|');
+				for (int j = 0; j < 99; j++) {
+					if (strlen(data[i].title) > j) {
+						if (data[i].title[j] != '\n')
+							printf("%c", data[i].title[j]);
+					}
+					else
+					{
+						printf(" ");
+					}
+				}
+				printf("|%16s\n", di_date[i]);
+			}
+			printf("\n\n\t\t\t\t\t\t\t[현재 페이지 : %d]\n\n\t이전 : [\t다음 : ]\t만들기 : z\t읽기 : x\t삭제 : c\t초기화 : v\t종료 : b\n", page + 1);
+			Isclear = 0;
+		}
 		c=getch();	//버퍼없이 문자를 입력받음
 		char comment[6] = {'[', ']', 'z', 'x', 'c', 'v'};
 		switch (c)
 		{
 			case '[':
-				printf("이전");
-				return;
+				if (page == 0) {
+					printf("마지막 페이지입니다.\n");
+					continue;
+				}
+				else
+				{
+					page--;
+					Isclear = 1;
+					continue;
+				}
 			case ']':
-				printf("다음");
-				return;
+				if (file_count_func(folder_path) <= 25 * (page + 1)) {
+					printf("더이상 넘길 수 없습니다.\n");
+					continue;
+				}
+				else
+				{
+					page++;
+					Isclear = 1;
+					continue;
+				}
 			case 'z':
 				system("cls");
 				printf("일기장을 만듭니다.\n주의 : 작성 중 프로그램을 끄지마세요!\n중간에 끄면 파일 작성이 안됩니다!\n");
 				write_file();
+				Isclear = 1;
+				continue;
 			case 'x':
 				printf("읽기");
 				int input_number = 0;
-				printf("읽고 싶은 파일번호를 입력하시오 (1~25) : ");
+				printf("현재 페이지에서 읽고 싶은 파일 번호를 입력하시오 (1~25) (0 : 취소) : ");
 				while (1)
 				{
 					scanf("%d", &input_number);
 					if (input_number <= file_count_func(folder_path) && input_number > 0) {	//만약 입력한 숫자가 폴더 내에 있는 파일 숫자보다 작거나 같다면
-						file_read(input_number);	//파일을 읽는 함수 호출
+						file_read(input_number + 25 * page);	//파일을 읽는 함수 호출
+						break;
+					}
+					else if (input_number == 0) {
+						break;
 					}
 					else
 					{
-						printf("%d보다 같거나  작은 수(양수)를 입력해주세요.", file_count_func(folder_path));
+						printf("%d보다 같거나  작은 수(양수)를 입력해주세요. >> ", file_count_func(folder_path));
+						continue;
 					} 
 				}
-				return;
+				Isclear = 1;
+				continue;
 			case 'c':
 				printf("삭제"); 
 				remove_file();
+				Isclear = 1;
 				continue;
 			case 'v':
-				printf("창 크기 초기화");
-				system("mode con cols=140 lines=40");
-				main_screen();
+				page = 0;
+				Isclear = 1;
+				system("mode con cols=141 lines=40");
 				continue;
 			case 'b':
 				printf("종료합니다.\n");
-				return;
+				return 0;
 		}
 	}
 }
@@ -218,12 +278,12 @@ int main(void) {
 	char input_1;
 	start_screen(&input_1);
 	if (input_1 == 'y') {
-		main_screen();
+		main_screen(0);
 	}
 	return 0;
 }
 
-void file_read(int file_number) {
+void file_read(int file_number) {	//일기장 (파일)을 읽는 함수 
 	FILE *fp;
 	FILE_SAMPLE f_s;
 	char path[50];
@@ -244,16 +304,17 @@ void file_read(int file_number) {
 		switch (input_key)
 		{
 		case 'o':
-			main_screen();
+			return;
 		case 'p':
 			printf("수정을 합니다.\n"); 
 			correct_file(file_number);
 			return 0;
 		}
 	}
+	return;
 }
 
-void correct_file(int file_number) {
+void correct_file(int file_number) {	//파일 수정 함수
 	FILE *fp;
 	FILE_SAMPLE correct_f_s;
 	char p[50];
@@ -266,24 +327,26 @@ void correct_file(int file_number) {
 	fread(&correct_f_s, sizeof(correct_f_s), 1, fp);
 	fclose(fp);
 	scanf("%s", correct_f_s.title);
+	return;
 }
 const char* get_path_of_file(int input) {	//파일 경로만들어주는 함수
 	int file_total_number = file_count_func(folder_path);
-	char path_for_file[100];
+	char path_for_file[50];
 	strcpy(path_for_file, folder_path);
 	strcat(path_for_file, "\\");
 	strcat(path_for_file, get_file_name_func(folder_path, file_total_number, input));
 	return path_for_file;
 }
 
-void remove_file() {
+void remove_file() {	//파일 삭제 함수
 	int input_int = 0;
 	char input_char = { 0 };
 	char path[50];
+	short Isdone = 0;
 	FILE *fp;
 	FILE_SAMPLE file_sample;
 	printf("삭제하려는 파일의 번호를 입력해주세요. (0 : 취소)");
-	while (1) {
+	while (Isdone == 0) {
 		scanf("%d", &input_int);
 		if (input_int <= file_count_func(folder_path) && input_int > 0) {
 			strcpy(path, get_path_of_file(input_int));
@@ -302,18 +365,21 @@ void remove_file() {
 					char path[50];
 					strcpy(path, get_path_of_file(input_int));
 					int result = remove(path);
-					if (result == 0) {
+					if (result == 0) {	//파일 삭제 성공시
+						array_setup(input_int);
 						printf("%s\n파일을 삭제 성공했습니다...\n", path);
 						printf("메인화면으로 돌아갑니다...\n");
 						Sleep(1500);
-						main_screen();
+						Isdone = 1;
+						return;
 					}
-					else if (result == -1)
+					else if (result == -1)	//파일 삭제 실패시
 					{
 						printf("%s\n파일을 삭제 실패했습니다...\n", path);
 						printf("메인화면으로 돌아갑니다...\n");
 						Sleep(1500);
-						main_screen();
+						Isdone = 1;
+						return;
 					}
 				}
 				else if (input_char == 'n') {
@@ -331,15 +397,98 @@ void remove_file() {
 			printf("%d보다 같거나  작은 수(양수)를 입력해주세요 >> ", file_count_func(folder_path));
 		}
 	}
+	return;
 }
 
-void write_file() {
-	srand(time(NULL));
-	unsigned int random_title = (rand() % 50000) + 10000;//파일 이름을 난수로 정할거임.
-	//===============파일 이름 중복 검출해야함.=====================
+int ditect_multiple_file_name(char *txt_file_name) {//파일 중복 검출하는 함수
+	struct _finddata_t fd;
+	long handle;
+	int r = 1;
+	int result_int = -1;
+	char path_f[100];
+	strcpy(path_f, folder_path);
+	strcat(path_f, ".\\*.*");
+
+	FILE *fp;
+	FILE_SAMPLE f_s;
+	handle = _findfirst(path_f, &fd);
+	if (handle == -1) {
+		printf("오류\n파일 없음\n");
+		return;
+	}
+	while (r != -1) {	
+		if (strcmp(fd.name, ".") != 0 && strcmp(fd.name, "..") != 0) {
+			if (strcmp(txt_file_name, fd.name) == 0) {
+				result_int = 0;
+			}
+		}
+		r = _findnext(handle, &fd);	//다음 파일로
+	}
+	_findclose(handle);	//닫음
+	return result_int;
+}
+
+void array_setup(int delete_file_number) {//우선 순위를 다시 정렬시킴. 삭제할 때 쓰임.
+	FILE *fp;
+	FILE_SAMPLE r_f_s;
+	FILE_SAMPLE w_f_s;
+	char p[50];
+	int max_file_count = file_count_func(folder_path) + 1;
+	printf("%d | %d\n", max_file_count, delete_file_number);
+	if (delete_file_number != max_file_count) {
+		for (int i = delete_file_number + 1; i <= max_file_count; i++) {
+			int prority_c;
+			char title_c[101];
+			char content_c[501];
+			strcpy(p, get_path_of_file(i));
+			if ((fp = fopen(p, "rb")) == NULL) {
+				printf("정렬하려는 파일을 읽기 실패하였습니다.\n");
+				exit(1);
+			}
+			fread(&r_f_s, sizeof(r_f_s), 1, fp);
+			prority_c = r_f_s.prority - 1;
+			strcpy(title_c, r_f_s.title);
+			strcpy(content_c, r_f_s.content);
+			fclose(fp);
+			if ((fp = fopen(p, "wb")) == NULL) {
+				printf("정렬하려는 파일을 읽기 실패하였습니다.\n");
+				exit(1);
+			}
+			w_f_s.prority = prority_c;
+			strcpy(w_f_s.title, title_c);
+			strcpy(w_f_s.content, content_c);
+			fwrite(&w_f_s, sizeof(w_f_s), 1, fp);
+			fclose(fp);
+		}
+	}
+}
+
+void write_file() {	//일기장(파일) 생성하는 함수
+	int cut = 1;
 	char file_name[10];
-	sprintf(file_name, "%d", random_title);
-	strcat(file_name, ".txt");
+	while (cut != 0)
+	{
+		srand(time(NULL));
+		unsigned int random_title = (rand() % 50000) + 10000;//파일 이름을 난수로 정할거임. 최대 50000번 작성 가능
+		sprintf(file_name, "%d", random_title);
+		strcat(file_name, ".txt");
+		printf("%s\n", file_name);
+		int Ismultiple = ditect_multiple_file_name(file_name);
+		if (Ismultiple == 0) {
+			if (cut > 6) {
+				printf("5번 이상 실행했습니다.\n다시 메인 화면으로 돌아갑니다.\n");
+				Sleep(1500);
+				main_screen(0);
+			}
+			printf("중복\n다시 난수를 다시 생성합니다.\n");
+			Sleep(1500);
+			cut++;
+		}
+		else if(Ismultiple == -1){
+			cut = 0;
+			printf("중복아님\n");
+		}
+	}
 	FILE *fp;
 	FILE_SAMPLE write_f_s;
 	if (file_count_func(folder_path) == -1) {
@@ -350,9 +499,12 @@ void write_file() {
 		write_f_s.prority = file_count_func(folder_path) + 1;
 	}
 	printf("%d\n", write_f_s.prority);
-	printf("제목을 입력해주세요.\n제목:");
+	printf("제목을 입력해주세요.( 100자 이하 )\n제목 : ");
 	fgets(write_f_s.title, 100, stdin);
-	printf("===========================================================\n내용을 입력해주세요.\n내용:");
+	for (int i = 0; i <= 140; i++) {
+		printf("=");
+	}
+	printf("\n내용을 입력해주세요.( 500자 이하 )\n내용 : ");
 	fgets(write_f_s.content, 500, stdin);
 	int i;
 	char path_[50];
@@ -374,6 +526,6 @@ void write_file() {
 	fclose(fp);
 	printf("\n작성 완료!\n곧 메인화면으로 돌아갑니다!\n");
 
-	Sleep(1000);//딜레이를 줌
-	main_screen();
+	Sleep(500);//딜레이를 줌 (1.5초)
+	return;
 }
