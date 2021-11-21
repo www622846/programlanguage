@@ -4,7 +4,7 @@
 #include <Windows.h>	//system을 쓰기 위함
 #include <direct.h>		//mkdir()을 쓰기 위함
 #include <io.h>	//struct _finddata_t fd;를 써야함. 있어야지 폴더 내에 있는 파일 정보를 읽을 수 있음.
-#include <time.h>
+#include <time.h>//time_t
 
 struct date
 {
@@ -45,15 +45,15 @@ int file_count_func( char *path) {	//파일의 최대 개수
 	char path_f[100];
 	strcpy(path_f, path);
 	strcat(path_f, ".\\*.*");
-	handle = _findfirst(path_f, &fd);
+	handle = _findfirst(path_f, &fd);	//첫번째 파일
 	if (handle == -1) {
 		printf("오류\n파일 없음\n");
 		return;
 	}
 	while (r != -1) {	//파일의 개수을 알아냄
-		r = _findnext(handle, &fd);
-		if (strcmp(fd.name, ".") != 0 && strcmp(fd.name, "..") != 0) {
-			result++;
+		r = _findnext(handle, &fd);	//다음 파일
+		if (strcmp(fd.name, ".") != 0 && strcmp(fd.name, "..") != 0) {	//.과 ..은 제외
+			result++;	//파일있을 때마다 result++
 		}
 	}
 	return result;
@@ -89,7 +89,6 @@ const char* get_file_name_func( char *path, int total_file_count, int select_fil
 			else	//파일 오류가 안 난다면
 			{
 				fread(&f_s, sizeof(FILE_SAMPLE), 1, fp);
-				/////////////////////printf("%s | %d\n", fd.name, f_s.prority);
 				if (f_s.prority == select_file_number) {	//선택한 우선순위가 파일 내 우선순위와 같다면
 					strcpy(result_string, fd.name);
 				}
@@ -128,8 +127,8 @@ void start_screen(char *ch) {	//시작할 때 가장 먼저 실행하는 함수
 }
 
 void main_screen() {	//시작 후 일기장을 보여주는 함수
-	struct d_title data[25];	//더미
-	char di_date[25][15];	//더미
+	struct d_title data[25];	
+	char di_date[25][15];	
 	char file_name[50];
 
 	FILE *fp;
@@ -144,14 +143,14 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 		if(Isclear)
 		{
 			system("cls");	//cmd창을 비움
-			int se_nu = 0;
+			int se_nu = 0;	//숫자를 다시 셋팅하는 정수
 
-			if (file_total_number > 25 * (page+1)) {
-				se_nu = 25 * (page + 1);
+			if (file_total_number > 25 * (page+1)) {	//만약 파일 최대 숫자가 page + 1에 25를 곱한 수보다 크다면
+				se_nu = 25 * (page + 1);	//se_nu는 page + 1에서 25 곱한 값이다.
 			}
 			else
 			{
-				se_nu = file_total_number - 25 * (file_total_number / 25);
+				se_nu = file_total_number - 25 * (file_total_number / 25);	//아니라면 se_nu는 최대 개수에 최대 개수를 25로 나눈 몫에 25를 곱한 값이다.
 			}
 			if (file_total_number != -1) {
 				for (int i = 0; i < se_nu ; i++) {
@@ -200,8 +199,8 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 		char comment[6] = {'[', ']', 'z', 'x', 'c', 'v'};
 		switch (c)
 		{
-			case '[':
-				if (page == 0) {
+			case '[':	//이전으로 넘어감
+				if (page == 0) {	//page가 0이라면
 					printf("마지막 페이지입니다.\n");
 					continue;
 				}
@@ -211,8 +210,8 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 					Isclear = 1;
 					continue;
 				}
-			case ']':
-				if (file_count_func(folder_path) <= 25 * (page + 1)) {
+			case ']':	//다음으로 넘어감
+				if (file_count_func(folder_path) <= 25 * (page + 1)) {	//최대 파일 개수가 page + 1에 25를 곱한 값보다 작거나 같다면
 					printf("더이상 넘길 수 없습니다.\n");
 					continue;
 				}
@@ -222,13 +221,13 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 					Isclear = 1;
 					continue;
 				}
-			case 'z':
+			case 'z':	//일기를 만듦
 				system("cls");
 				printf("\t일기장을 만듭니다.\n\n\t주의 : 작성 중 프로그램을 끄지마세요!\n\n\t중간에 끄면 파일 작성이 안됩니다!\n\n");
 				write_file();
 				Isclear = 1;
 				continue;
-			case 'x':
+			case 'x':	//읽기
 				printf("\n현재 페이지에서 읽고 싶은 파일 번호를 입력하시오 (1~25) (0 : 취소) : ");
 				int input_number = 0;
 				while (1)
@@ -249,18 +248,18 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 				}
 				Isclear = 1;
 				continue;
-			case 'c':
+			case 'c':	//삭제
 				remove_file();
 				Isclear = 1;
 				continue;
-			case 'v':
+			case 'v':	//초기화 
 				page = 0;
 				Isclear = 1;
 				system("mode con cols=141 lines=40");
 				continue;
-			case 'b':
+			case 'b':	//종료
 				return ;
-			default : 
+			default : //나머지
 				continue;
 		}
 	}
@@ -293,7 +292,7 @@ void file_read(int file_number) {	//일기장 (파일)을 읽는 함수
 	print_line();
 	printf("내용 : %s\n", f_s.content);
 	print_line();
-	printf("%s\n", (f_s.Iscorrect == 0) ? "수정되지 않은 글입니다." : "수정된 글입니다.");
+	printf("%s\n", (f_s.Iscorrect == 0) ? "수정되지 않은 글입니다." : "수정된 글입니다.");	//(f_s.Iscorrect == 0)가 참이면 "수정되지 않은 글입니다."라는 문자열을 출력을 거짓이면 "수정된 글입니다."라는 문자열을 출력한다
 	print_line();
 	printf("\t%s : %c\t%s : %c\n", "나가기", 'o', "수정", 'p'); 
 	char input_key;
@@ -302,9 +301,9 @@ void file_read(int file_number) {	//일기장 (파일)을 읽는 함수
 		input_key = getch();
 		switch (input_key)
 		{
-		case 'o':
+		case 'o':	//수정에서 나가는 키
 			return;
-		case 'p':
+		case 'p':	//수정하는 키
 			printf("수정을 합니다.\n"); 
 			correct_file(file_number);
 			return 0;
@@ -333,14 +332,14 @@ void correct_file(int file_number) {	//파일 수정 함수
 	correct_Number = correct_f_s.Iscorrect;
 	d = correct_f_s.file_crate_date;
 	prority_number = correct_f_s.prority;
-	printf("먼저 제목을 수정합니다. ( 처음 엔터 누르면 안넘어감. | 500자 이하 | 0 : 취소 )\n");
+	printf("먼저 제목을 수정합니다. ( 처음 엔터 누르면 안넘어감. | 100자 이하 | 0 : 취소 )\n");
 	printf("제목 >> ");
 	fgets(correct_title, 100, stdin);
-	while (correct_title[0] == '\n') fgets(correct_title, 100, stdin);
-	correct_title[strlen(correct_title) - 1] = '\0';
-	if (correct_title[0] == '0' && strlen(correct_title) == 1) {
-		strcpy(correct_title, correct_f_s.title);
-		skip_count++;
+	while (correct_title[0] == '\n') fgets(correct_title, 100, stdin);	//만약 그냥 '\n'를 누르면 다시 입력해야함.
+	correct_title[strlen(correct_title) - 1] = '\0';	//'\n'을 '\0'로 바꿈
+	if (correct_title[0] == '0' && strlen(correct_title) == 1) {	//만약 문자열의 길이가 1이고 첫번째 자리에 '0'이라고 입력한다면
+		strcpy(correct_title, correct_f_s.title);	//기존에 있던 문자열을 복사
+		skip_count++;	//스킵 횟수를 + 1
 	}
 	print_line();
 	printf("내용을 수정합니다. ( 처음 엔터 누르면 안넘어감. | 500자 이하 | 0 : 취소 )\n");
@@ -387,7 +386,7 @@ void remove_file() {	//파일 삭제 함수
 	int input_int = 0;
 	char input_char = { 0 };
 	char path[50];
-	short Isdone = 0;
+	short Isdone = 0;	//완료되었는지 여부
 	char *f_n;
 	FILE *fp;
 	FILE_SAMPLE file_sample;
@@ -403,13 +402,13 @@ void remove_file() {	//파일 삭제 함수
 			}
 			fread(&file_sample, sizeof(file_sample), 1, fp);
 			fclose(fp);
-			f_n = (char *)malloc((strlen(file_sample.title) + 1));
+			f_n = (char *)malloc((strlen(file_sample.title) + 1));	//f_n을 동적할당
 			strcpy(f_n, file_sample.title);
 
 			f_n[strlen(file_sample.title)] = '\0';
 			printf("일기 제목이 \"%s\"맞습니까? (y/n) : ", f_n);
-			short i = 0;
-			while (i == 0)
+			short i = 0;	
+			while (i == 0)	//y나 n을 누를 때까지 반복
 			{
 				input_char = getch();
 				if (input_char == 'y') {
@@ -455,7 +454,7 @@ int ditect_multiple_file_name(char *txt_file_name) {//파일 중복 검출하는
 	struct _finddata_t fd;
 	long handle;
 	int r = 1;
-	int result_int = -1;
+	int result_int = -1;	//처음 result_int는 -1
 	char path_f[100];
 	strcpy(path_f, folder_path);
 	strcat(path_f, ".\\*.*");
@@ -468,8 +467,8 @@ int ditect_multiple_file_name(char *txt_file_name) {//파일 중복 검출하는
 	}
 	while (r != -1) {	
 		if (strcmp(fd.name, ".") != 0 && strcmp(fd.name, "..") != 0) {
-			if (strcmp(txt_file_name, fd.name) == 0) {
-				result_int = 0;
+			if (strcmp(txt_file_name, fd.name) == 0) {	//파일명이 매개변수 txt_file_name과 같다면
+				result_int = 0;	//result_int는 0
 			}
 		}
 		r = _findnext(handle, &fd);	//다음 파일로
@@ -484,8 +483,8 @@ void array_setup(int delete_file_number) {//우선 순위를 다시 정렬시킴
 	FILE_SAMPLE f_s;
 	int I_s = 0;
 	char p[50];
-	int max_file_count = file_count_func(folder_path) + 1;
-	if (delete_file_number != max_file_count) {
+	int max_file_count = file_count_func(folder_path) + 1;	//삭제된 후이니 지금의 파일 개수를 1더함
+	if (delete_file_number != max_file_count) { //만약 삭제된 파일의 우선 순위가 최대 파일 개수가 아니라면
 		for (int i = delete_file_number + 1; i <= max_file_count; i++) {
 			int prority_c;
 			char title_c[101];
@@ -555,7 +554,6 @@ void write_file() {	//일기장(파일) 생성하는 함수
 	{
 		write_f_s.prority = file_count_func(folder_path) + 1;
 	}  
-	//printf("%d\n", write_f_s.prority);
 	printf("제목을 입력해주세요.( 처음 엔터 누르면 안넘어감. | 100자 이하 | 0 : 메인화면으로 )\n제목 : ");
 	fgets(write_title, 100, stdin);
 	while (write_title[0] == '\n') fgets(write_title, 100, stdin);
