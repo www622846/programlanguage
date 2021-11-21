@@ -147,21 +147,17 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 			int se_nu = 0;
 
 			if (file_total_number > 25 * (page+1)) {
-				printf("%d\n", 25 * (file_total_number / 25));
 				se_nu = 25 * (page + 1);
 			}
 			else
 			{
 				se_nu = file_total_number - 25 * (file_total_number / 25);
 			}
-			printf("%d ", se_nu);
 			if (file_total_number != -1) {
 				for (int i = 0; i < se_nu ; i++) {
 					strcpy(file_name, get_path_of_file(i + 1 + page * 25));
-					printf("%d ", i + 1 + page * 25);
 					if ((fp = fopen(file_name, "rb")) == NULL) {
 						printf("--main_screen--\n파일 읽기 오류!\n");
-						printf("%s\n", file_name);
 						exit(1);
 					}
 					fread(&read_f_s, sizeof(read_f_s), 1, fp);
@@ -183,7 +179,7 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 				printf("-");
 			}
 			printf("\n");
-			for (int i = 0; i < se_nu; i++) {//문자열 나열
+			for (int i = 0; i < se_nu; i++) {//문자열 나열 시작
 				printf("%4d%3c ", data[i].id, '|');
 				for (int j = 0; j < 99; j++) {
 					if (strlen(data[i].title) > j) {
@@ -195,7 +191,7 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 						printf(" ");
 					}
 				}
-				printf("|%16s\n", di_date[i]);
+				printf("|%16s\n", di_date[i]);//문자열 나열 끝
 			}
 			printf("\n\n\t\t\t\t\t\t\t[현재 페이지 : %d]\n\n\t이전 : [\t다음 : ]\t만들기 : z\t읽기 : x\t삭제 : c\t초기화 : v\t종료 : b\n", page + 1);
 			Isclear = 0;
@@ -228,14 +224,13 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 				}
 			case 'z':
 				system("cls");
-				printf("일기장을 만듭니다.\n주의 : 작성 중 프로그램을 끄지마세요!\n중간에 끄면 파일 작성이 안됩니다!\n");
+				printf("\t일기장을 만듭니다.\n\n\t주의 : 작성 중 프로그램을 끄지마세요!\n\n\t중간에 끄면 파일 작성이 안됩니다!\n\n");
 				write_file();
 				Isclear = 1;
 				continue;
 			case 'x':
-				printf("읽기");
+				printf("\n현재 페이지에서 읽고 싶은 파일 번호를 입력하시오 (1~25) (0 : 취소) : ");
 				int input_number = 0;
-				printf("현재 페이지에서 읽고 싶은 파일 번호를 입력하시오 (1~25) (0 : 취소) : ");
 				while (1)
 				{
 					scanf("%d", &input_number);
@@ -255,7 +250,6 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 				Isclear = 1;
 				continue;
 			case 'c':
-				printf("삭제"); 
 				remove_file();
 				Isclear = 1;
 				continue;
@@ -265,7 +259,6 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 				system("mode con cols=141 lines=40");
 				continue;
 			case 'b':
-				printf("종료합니다.\n");
 				return ;
 			default : 
 				continue;
@@ -327,38 +320,45 @@ void correct_file(int file_number) {	//파일 수정 함수
 	char p[50];
 	char correct_title[101];
 	char correct_content[501];
+	int correct_Number;
 	int prority_number;
+	int skip_count = 0;;
 	strcpy(p, get_path_of_file(file_number));
-	printf("%s\n", p);
 	if((fp = fopen(p, "rb"))==NULL){
 		printf("수정하려는 파일을 읽기를 실패하였습니다.\n");
 		exit(1);
 	}
 	fread(&correct_f_s, sizeof(correct_f_s), 1, fp);
 	fclose(fp);
+	correct_Number = correct_f_s.Iscorrect;
 	d = correct_f_s.file_crate_date;
 	prority_number = correct_f_s.prority;
 	printf("먼저 제목을 수정합니다. ( 처음 엔터 누르면 안넘어감. | 500자 이하 | 0 : 취소 )\n");
 	printf("제목 >> ");
 	fgets(correct_title, 100, stdin);
 	while (correct_title[0] == '\n') fgets(correct_title, 100, stdin);
-	if (correct_title[0] == '0') return;
 	correct_title[strlen(correct_title) - 1] = '\0';
+	if (correct_title[0] == '0' && strlen(correct_title) == 1) {
+		strcpy(correct_title, correct_f_s.title);
+		skip_count++;
+	}
 	print_line();
 	printf("내용을 수정합니다. ( 처음 엔터 누르면 안넘어감. | 500자 이하 | 0 : 취소 )\n");
 	printf("내용 >> ");
 	fgets(correct_content, 500, stdin);
-	fgets(correct_content, 500, stdin);
 	while (correct_content[0] == '\n') fgets(correct_content, 500, stdin);
-	if (correct_content[0] == '0') return;
 	correct_content[strlen(correct_content) - 1] = '\0';
+	if (correct_content[0] == '0' && strlen(correct_content) == 1) {
+		strcpy(correct_content, correct_f_s.content);
+		skip_count++;
+	}
 	print_line();
 	if ((fp = fopen(p, "wb")) == NULL) {
 		printf("수정하려는 파일을 읽기를 실패하였습니다.\n");
 		exit(1);
 	}
 	correct_f_s.file_crate_date = d;
-	correct_f_s.Iscorrect = 1;
+	correct_f_s.Iscorrect = (skip_count == 2) ? correct_Number : 1;
 	correct_f_s.prority = prority_number;
 	strcpy(correct_f_s.title, correct_title);
 	strcpy(correct_f_s.content, correct_content);
@@ -391,7 +391,7 @@ void remove_file() {	//파일 삭제 함수
 	char *f_n;
 	FILE *fp;
 	FILE_SAMPLE file_sample;
-	printf("삭제하려는 파일의 번호를 입력해주세요. (0 : 취소)");
+	printf("\n삭제하려는 파일의 번호를 입력해주세요. (0 : 취소)");
 	while (Isdone == 0) {
 		scanf("%d", &input_int);
 		print_line();
@@ -485,7 +485,6 @@ void array_setup(int delete_file_number) {//우선 순위를 다시 정렬시킴
 	int I_s = 0;
 	char p[50];
 	int max_file_count = file_count_func(folder_path) + 1;
-	printf("%d | %d\n", max_file_count, delete_file_number);
 	if (delete_file_number != max_file_count) {
 		for (int i = delete_file_number + 1; i <= max_file_count; i++) {
 			int prority_c;
@@ -532,7 +531,6 @@ void write_file() {	//일기장(파일) 생성하는 함수
 		unsigned int random_title = (rand() % 50000) + 10000;//파일 이름을 난수로 정할거임. 최대 50000번 작성 가능
 		sprintf(file_name, "%d", random_title);
 		strcat(file_name, ".txt");
-		printf("%s\n", file_name);
 		int Ismultiple = ditect_multiple_file_name(file_name);
 		if (Ismultiple == 0) {
 			if (cut > 6) {
@@ -540,13 +538,12 @@ void write_file() {	//일기장(파일) 생성하는 함수
 				Sleep(1500);
 				main_screen(0);
 			}
-			printf("중복\n다시 난수를 다시 생성합니다.\n");
-			Sleep(1500);
+			printf("파일명이 중복인 부분이 확인되었습니다.\n다시 난수를 다시 생성합니다.\n");
+			Sleep(1000);
 			cut++;
 		}
 		else if(Ismultiple == -1){
 			cut = 0;
-			printf("중복아님\n");
 		}
 	}
 	FILE *fp;
@@ -559,17 +556,16 @@ void write_file() {	//일기장(파일) 생성하는 함수
 		write_f_s.prority = file_count_func(folder_path) + 1;
 	}  
 	//printf("%d\n", write_f_s.prority);
-	printf("제목을 입력해주세요.( 처음 엔터 누르면 안넘어감. | 100자 이하 | 0 : 취소 )\n제목 : ");
+	printf("제목을 입력해주세요.( 처음 엔터 누르면 안넘어감. | 100자 이하 | 0 : 메인화면으로 )\n제목 : ");
 	fgets(write_title, 100, stdin);
 	while (write_title[0] == '\n') fgets(write_title, 100, stdin);
 	if (write_title[0] == '0') return;
 	write_title[strlen(write_title) - 1] = '\0';
 	strcpy(write_f_s.title, write_title);
 	print_line();
-	printf("\n내용을 입력해주세요.( 처음 엔터 누르면 안넘어감. | 500자 이하 | 0 : 취소 )\n내용 : ");
+	printf("\n내용을 입력해주세요.( 처음 엔터 누르면 안넘어감. | 500자 이하 )\n내용 : ");
 	fgets(write_content, 500, stdin);
 	while (write_content[0] == '\n') fgets(write_content, 500, stdin);
-	if (write_content[0] == '0') return;
 	write_content[strlen(write_content) - 1] = '\0';
 	strcpy(write_f_s.content, write_content);
 	int i;
@@ -581,7 +577,6 @@ void write_file() {	//일기장(파일) 생성하는 함수
 	strcpy(path_, folder_path);
 	strcat(path_, "\\");
 	strcat(path_, file_name);
-	printf("%s\n", path_);
 	fp = fopen(path_, "wb");
 
 	if (fp == NULL)
