@@ -484,7 +484,7 @@ void array_setup(int delete_file_number) {//우선 순위를 다시 정렬시킴
 	int I_s = 0;
 	char p[50];
 	int max_file_count = file_count_func(folder_path) + 1;	//삭제된 후이니 지금의 파일 개수를 1더함
-	if (delete_file_number != max_file_count) { //만약 삭제된 파일의 우선 순위가 최대 파일 개수가 아니라면
+	if (delete_file_number != max_file_count) { //만약 삭제된 파일의 우선 순위가 최대 파일 개수가 아니라면 ////////////////////////////////////////////////
 		for (int i = delete_file_number + 1; i <= max_file_count; i++) {
 			int prority_c;
 			char title_c[101];
