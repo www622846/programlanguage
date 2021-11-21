@@ -4,6 +4,7 @@
 #include <Windows.h>	//system을 쓰기 위함
 #include <direct.h>		//mkdir()을 쓰기 위함
 #include <io.h>	//struct _finddata_t fd;를 써야함. 있어야지 폴더 내에 있는 파일 정보를 읽을 수 있음.
+#include <time.h>
 
 struct date
 {
@@ -21,8 +22,9 @@ struct d_title	//Display Title main_screen()에 필요한 구조체
 typedef struct  {
 	int prority;
 	char title[101];	//제목은 100자이하
-	//struct date file_crate_date;
 	char content[501];	//내용은 500자이하
+	struct date file_crate_date;	//파일 생성 날짜
+	int Iscorrect;	//수정 여부 확인
 }FILE_SAMPLE;
 
 char folder_path[] = "C:\\diaryFolder";	//폴더 경로
@@ -32,7 +34,8 @@ void write_file();
 const char* get_path_of_file(int input);
 void correct_file(int file_number);
 void remove_file();
-void array_setup(int delete_file_number);
+void array_setup(int delete_file_number); 
+void print_line();
 
 int file_count_func( char *path) {	//파일의 최대 개수
 	struct _finddata_t fd;
@@ -125,10 +128,10 @@ void start_screen(char *ch) {	//시작할 때 가장 먼저 실행하는 함수
 }
 
 void main_screen() {	//시작 후 일기장을 보여주는 함수
-	struct date d = { 01,01,2021 };	//더미
 	struct d_title data[25];	//더미
 	char di_date[25][15];	//더미
 	char file_name[50];
+
 	FILE *fp;
 	struct _finddata_t fd_;
 	int Isclear = 1;
@@ -138,31 +141,24 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 	while (1)
 	{
 		int file_total_number = file_count_func(folder_path);
-		int setting_number = 0;
-		if (file_total_number > 25 * (page + 1)) {
-			setting_number = 25;
-		}
-		else
-		{
-			setting_number = file_total_number;
-		}
 		if(Isclear)
 		{
 			system("cls");	//cmd창을 비움
 			int se_nu = 0;
 
-			if (file_total_number > 25 * (file_total_number / 25)) {
-				se_nu = file_total_number - 25 * (file_total_number / 25);
+			if (file_total_number > 25 * (page+1)) {
+				printf("%d\n", 25 * (file_total_number / 25));
+				se_nu = 25 * (page + 1);
 			}
 			else
 			{
-				printf("%d\n", 25 * (file_total_number / 25));
-				se_nu = file_total_number;
+				se_nu = file_total_number - 25 * (file_total_number / 25);
 			}
-			printf("%d\n", se_nu);
+			printf("%d ", se_nu);
 			if (file_total_number != -1) {
-				for (int i = 0; i < file_total_number - 25 * page; i++) {
+				for (int i = 0; i < se_nu ; i++) {
 					strcpy(file_name, get_path_of_file(i + 1 + page * 25));
+					printf("%d ", i + 1 + page * 25);
 					if ((fp = fopen(file_name, "rb")) == NULL) {
 						printf("--main_screen--\n파일 읽기 오류!\n");
 						printf("%s\n", file_name);
@@ -172,10 +168,11 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 					fclose(fp);
 					data[i].id = read_f_s.prority;	//우선순위를 data[i].id로
 					strcpy(data[i].title, read_f_s.title);	//data[i].title에 제목을 복사
-					data[i].d_date = d;
-					sprintf(di_date[i], "%d.%d.%d", data[i].d_date.year, data[i].d_date.month, data[i].d_date.day + i);
+					data[i].d_date = read_f_s.file_crate_date;
+					sprintf(di_date[i], "%d.%d.%d", data[i].d_date.year, data[i].d_date.month, data[i].d_date.day);
 				}
 			}
+			printf("\n");
 			char de[3][5] = {
 				{"번호"},
 				{"제목"},
@@ -186,7 +183,7 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 				printf("-");
 			}
 			printf("\n");
-			for (int i = page * 25; i < setting_number; i++) {//문자열 나열
+			for (int i = 0; i < se_nu; i++) {//문자열 나열
 				printf("%4d%3c ", data[i].id, '|');
 				for (int j = 0; j < 99; j++) {
 					if (strlen(data[i].title) > j) {
@@ -203,7 +200,7 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 			printf("\n\n\t\t\t\t\t\t\t[현재 페이지 : %d]\n\n\t이전 : [\t다음 : ]\t만들기 : z\t읽기 : x\t삭제 : c\t초기화 : v\t종료 : b\n", page + 1);
 			Isclear = 0;
 		}
-		c=getch();	//버퍼없이 문자를 입력받음
+		c=getch();	//문자를 입력받음
 		char comment[6] = {'[', ']', 'z', 'x', 'c', 'v'};
 		switch (c)
 		{
@@ -269,7 +266,9 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 				continue;
 			case 'b':
 				printf("종료합니다.\n");
-				return 0;
+				return ;
+			default : 
+				continue;
 		}
 	}
 }
@@ -295,8 +294,15 @@ void file_read(int file_number) {	//일기장 (파일)을 읽는 함수
 	}
 	fread(&f_s, sizeof(f_s), 1, fp);
 	fclose(fp);
-	printf("우선순위 : %d\n제목 : %s\n내용 %s\n\n", f_s.prority, f_s.title, f_s.content);
-	printf("\t%s : %c\t%s : %c\n", "나가기", 'o', "수정", 'p');
+	printf("우선순위 : %d\n", f_s.prority);
+	print_line();
+	printf("제목 : %s\n", f_s.title);
+	print_line();
+	printf("내용 : %s\n", f_s.content);
+	print_line();
+	printf("%s\n", (f_s.Iscorrect == 0) ? "수정되지 않은 글입니다." : "수정된 글입니다.");
+	print_line();
+	printf("\t%s : %c\t%s : %c\n", "나가기", 'o', "수정", 'p'); 
 	char input_key;
 	while (1)
 	{
@@ -316,17 +322,56 @@ void file_read(int file_number) {	//일기장 (파일)을 읽는 함수
 
 void correct_file(int file_number) {	//파일 수정 함수
 	FILE *fp;
+	struct date d;
 	FILE_SAMPLE correct_f_s;
 	char p[50];
+	char correct_title[101];
+	char correct_content[501];
+	int prority_number;
 	strcpy(p, get_path_of_file(file_number));
 	printf("%s\n", p);
-	if((fp = fopen(p, "wb"))==NULL){
+	if((fp = fopen(p, "rb"))==NULL){
 		printf("수정하려는 파일을 읽기를 실패하였습니다.\n");
 		exit(1);
 	}
 	fread(&correct_f_s, sizeof(correct_f_s), 1, fp);
 	fclose(fp);
-	scanf("%s", correct_f_s.title);
+	d = correct_f_s.file_crate_date;
+	prority_number = correct_f_s.prority;
+	printf("먼저 제목을 수정합니다. ( 처음 엔터 누르면 안넘어감. | 500자 이하 | 0 : 취소 )\n");
+	printf("제목 >> ");
+	fgets(correct_title, 100, stdin);
+	while (correct_title[0] == '\n') fgets(correct_title, 100, stdin);
+	if (correct_title[0] == '0') return;
+	correct_title[strlen(correct_title) - 1] = '\0';
+	print_line();
+	printf("내용을 수정합니다. ( 처음 엔터 누르면 안넘어감. | 500자 이하 | 0 : 취소 )\n");
+	printf("내용 >> ");
+	fgets(correct_content, 500, stdin);
+	fgets(correct_content, 500, stdin);
+	while (correct_content[0] == '\n') fgets(correct_content, 500, stdin);
+	if (correct_content[0] == '0') return;
+	correct_content[strlen(correct_content) - 1] = '\0';
+	print_line();
+	if ((fp = fopen(p, "wb")) == NULL) {
+		printf("수정하려는 파일을 읽기를 실패하였습니다.\n");
+		exit(1);
+	}
+	correct_f_s.file_crate_date = d;
+	correct_f_s.Iscorrect = 1;
+	correct_f_s.prority = prority_number;
+	strcpy(correct_f_s.title, correct_title);
+	strcpy(correct_f_s.content, correct_content);
+	fwrite(&correct_f_s, sizeof(correct_f_s), 1, fp);
+	fclose(fp);
+	return;
+}
+void print_line() {
+	printf("\n");
+	for (int i = 0; i < 141; i++) {
+		printf("-");
+	}
+	printf("\n");
 	return;
 }
 const char* get_path_of_file(int input) {	//파일 경로만들어주는 함수
@@ -343,11 +388,13 @@ void remove_file() {	//파일 삭제 함수
 	char input_char = { 0 };
 	char path[50];
 	short Isdone = 0;
+	char *f_n;
 	FILE *fp;
 	FILE_SAMPLE file_sample;
 	printf("삭제하려는 파일의 번호를 입력해주세요. (0 : 취소)");
 	while (Isdone == 0) {
 		scanf("%d", &input_int);
+		print_line();
 		if (input_int <= file_count_func(folder_path) && input_int > 0) {
 			strcpy(path, get_path_of_file(input_int));
 			if ((fp = fopen(path, "rb")) == NULL) {
@@ -356,11 +403,15 @@ void remove_file() {	//파일 삭제 함수
 			}
 			fread(&file_sample, sizeof(file_sample), 1, fp);
 			fclose(fp);
-			printf("일기 제목이 %s맞습니까? (y/n) : ", file_sample.title);
+			f_n = (char *)malloc((strlen(file_sample.title) + 1));
+			strcpy(f_n, file_sample.title);
+
+			f_n[strlen(file_sample.title)] = '\0';
+			printf("일기 제목이 \"%s\"맞습니까? (y/n) : ", f_n);
 			short i = 0;
 			while (i == 0)
 			{
-				input_char = getchar();
+				input_char = getch();
 				if (input_char == 'y') {
 					char path[50];
 					strcpy(path, get_path_of_file(input_int));
@@ -408,7 +459,6 @@ int ditect_multiple_file_name(char *txt_file_name) {//파일 중복 검출하는
 	char path_f[100];
 	strcpy(path_f, folder_path);
 	strcat(path_f, ".\\*.*");
-
 	FILE *fp;
 	FILE_SAMPLE f_s;
 	handle = _findfirst(path_f, &fd);
@@ -429,9 +479,10 @@ int ditect_multiple_file_name(char *txt_file_name) {//파일 중복 검출하는
 }
 
 void array_setup(int delete_file_number) {//우선 순위를 다시 정렬시킴. 삭제할 때 쓰임.
-	FILE *fp;
-	FILE_SAMPLE r_f_s;
-	FILE_SAMPLE w_f_s;
+	FILE *fp; 
+	struct date d;
+	FILE_SAMPLE f_s;
+	int I_s = 0;
 	char p[50];
 	int max_file_count = file_count_func(folder_path) + 1;
 	printf("%d | %d\n", max_file_count, delete_file_number);
@@ -445,27 +496,36 @@ void array_setup(int delete_file_number) {//우선 순위를 다시 정렬시킴
 				printf("정렬하려는 파일을 읽기 실패하였습니다.\n");
 				exit(1);
 			}
-			fread(&r_f_s, sizeof(r_f_s), 1, fp);
-			prority_c = r_f_s.prority - 1;
-			strcpy(title_c, r_f_s.title);
-			strcpy(content_c, r_f_s.content);
+			fread(&f_s, sizeof(f_s), 1, fp);
 			fclose(fp);
+			prority_c = f_s.prority - 1;
+			strcpy(title_c, f_s.title);
+			strcpy(content_c, f_s.content);
+			I_s = f_s.Iscorrect;
+			d = f_s.file_crate_date;
 			if ((fp = fopen(p, "wb")) == NULL) {
 				printf("정렬하려는 파일을 읽기 실패하였습니다.\n");
 				exit(1);
 			}
-			w_f_s.prority = prority_c;
-			strcpy(w_f_s.title, title_c);
-			strcpy(w_f_s.content, content_c);
-			fwrite(&w_f_s, sizeof(w_f_s), 1, fp);
+			f_s.file_crate_date = d;
+			f_s.prority = prority_c;
+			strcpy(f_s.title, title_c);
+			strcpy(f_s.content, content_c);
+			f_s.Iscorrect = I_s;
+			fwrite(&f_s, sizeof(f_s), 1, fp);
 			fclose(fp);
 		}
 	}
 }
 
 void write_file() {	//일기장(파일) 생성하는 함수
+	struct tm* t;
+	time_t base = time(NULL);
+	t = localtime(&base);
 	int cut = 1;
 	char file_name[10];
+	char write_title[101];
+	char write_content[501];
 	while (cut != 0)
 	{
 		srand(time(NULL));
@@ -497,17 +557,27 @@ void write_file() {	//일기장(파일) 생성하는 함수
 	else
 	{
 		write_f_s.prority = file_count_func(folder_path) + 1;
-	}
-	printf("%d\n", write_f_s.prority);
-	printf("제목을 입력해주세요.( 100자 이하 )\n제목 : ");
-	fgets(write_f_s.title, 100, stdin);
-	for (int i = 0; i <= 140; i++) {
-		printf("=");
-	}
-	printf("\n내용을 입력해주세요.( 500자 이하 )\n내용 : ");
-	fgets(write_f_s.content, 500, stdin);
+	}  
+	//printf("%d\n", write_f_s.prority);
+	printf("제목을 입력해주세요.( 처음 엔터 누르면 안넘어감. | 100자 이하 | 0 : 취소 )\n제목 : ");
+	fgets(write_title, 100, stdin);
+	while (write_title[0] == '\n') fgets(write_title, 100, stdin);
+	if (write_title[0] == '0') return;
+	write_title[strlen(write_title) - 1] = '\0';
+	strcpy(write_f_s.title, write_title);
+	print_line();
+	printf("\n내용을 입력해주세요.( 처음 엔터 누르면 안넘어감. | 500자 이하 | 0 : 취소 )\n내용 : ");
+	fgets(write_content, 500, stdin);
+	while (write_content[0] == '\n') fgets(write_content, 500, stdin);
+	if (write_content[0] == '0') return;
+	write_content[strlen(write_content) - 1] = '\0';
+	strcpy(write_f_s.content, write_content);
 	int i;
 	char path_[50];
+	write_f_s.Iscorrect = 0; 
+	write_f_s.file_crate_date.year = t->tm_year + 1900;
+	write_f_s.file_crate_date.month = t->tm_mon + 1;
+	write_f_s.file_crate_date.day = t->tm_mday;
 	strcpy(path_, folder_path);
 	strcat(path_, "\\");
 	strcat(path_, file_name);
