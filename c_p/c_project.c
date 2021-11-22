@@ -407,6 +407,7 @@ void remove_file() {	//파일 삭제 함수
 
 			f_n[strlen(file_sample.title)] = '\0';
 			printf("일기 제목이 \"%s\"맞습니까? (y/n) : ", f_n);
+			free(f_n);
 			short i = 0;	
 			while (i == 0)	//y나 n을 누를 때까지 반복
 			{
@@ -417,7 +418,7 @@ void remove_file() {	//파일 삭제 함수
 					int result = remove(path);
 					if (result == 0) {	//파일 삭제 성공시
 						array_setup(input_int);
-						printf("%s\n파일을 삭제 성공했습니다...\n", path);
+						printf("\n%s\n파일을 삭제 성공했습니다...\n", path);
 						printf("메인화면으로 돌아갑니다...\n");
 						Sleep(1500);
 						Isdone = 1;
@@ -425,7 +426,7 @@ void remove_file() {	//파일 삭제 함수
 					}
 					else if (result == -1)	//파일 삭제 실패시
 					{
-						printf("%s\n파일을 삭제 실패했습니다...\n", path);
+						printf("\n%s\n파일을 삭제 실패했습니다...\n", path);
 						printf("메인화면으로 돌아갑니다...\n");
 						Sleep(1500);
 						Isdone = 1;
