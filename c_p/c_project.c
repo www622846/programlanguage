@@ -19,7 +19,7 @@ struct d_title	//Display Title main_screen()에 필요한 구조체
 	struct date d_date;
 };
 
-typedef struct  {
+typedef struct {
 	int prority;
 	char title[101];	//제목은 100자이하
 	char content[501];	//내용은 500자이하
@@ -34,10 +34,10 @@ void write_file();
 const char* get_path_of_file(int input);
 void correct_file(int file_number);
 void remove_file();
-void array_setup(int delete_file_number); 
+void array_setup(int delete_file_number);
 void print_line();
 
-int file_count_func( char *path) {	//파일의 최대 개수
+int file_count_func(char *path) {	//파일의 최대 개수
 	struct _finddata_t fd;
 	int result = -1;
 	long handle;
@@ -59,7 +59,7 @@ int file_count_func( char *path) {	//파일의 최대 개수
 	return result;
 }
 
-const char* get_file_name_func( char *path, int total_file_count, int select_file_number) {	//파일의 이름(반드시 파일이 1개 이상 있어야함)
+const char* get_file_name_func(char *path, int total_file_count, int select_file_number) {	//파일의 이름(반드시 파일이 1개 이상 있어야함)
 	struct _finddata_t fd;
 	long handle;
 	int r = 1;
@@ -108,7 +108,7 @@ void start_screen(char *ch) {	//시작할 때 가장 먼저 실행하는 함수
 	if (Result_Folder_crete == 0) {
 		printf("폴더가 생성되지 않았습니다\n%s 폴더를 생성했습니다.", folder_path);
 	}
-	else if(Result_Folder_crete == -1)
+	else if (Result_Folder_crete == -1)
 	{
 		printf("폴더가 있습니다.\n");
 	}
@@ -127,8 +127,8 @@ void start_screen(char *ch) {	//시작할 때 가장 먼저 실행하는 함수
 }
 
 void main_screen() {	//시작 후 일기장을 보여주는 함수
-	struct d_title data[25];	
-	char di_date[25][15];	
+	struct d_title data[25];
+	char di_date[25][15];
 	char file_name[50];
 
 	FILE *fp;
@@ -140,20 +140,20 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 	while (1)
 	{
 		int file_total_number = file_count_func(folder_path);
-		if(Isclear)
+		if (Isclear)
 		{
 			system("cls");	//cmd창을 비움
 			int se_nu = 0;	//숫자를 다시 셋팅하는 정수
 
-			if (file_total_number > 25 * (page+1)) {	//만약 파일 최대 숫자가 page + 1에 25를 곱한 수보다 크다면
-				se_nu = 25 * (page + 1);	//se_nu는 page + 1에서 25 곱한 값이다.
+			if (file_total_number >= 25 * (page + 1)) {	//만약 파일 최대 숫자가 page + 1에 25를 곱한 수보다 크거나 같다면
+				se_nu = 25 * (page + 1) ;	//se_nu는 page + 1에서 25 곱한 값이다.
 			}
 			else
 			{
 				se_nu = file_total_number - 25 * (file_total_number / 25);	//아니라면 se_nu는 최대 개수에 최대 개수를 25로 나눈 몫에 25를 곱한 값이다.
 			}
 			if (file_total_number != -1) {
-				for (int i = 0; i < se_nu ; i++) {
+				for (int i = 0; i < se_nu; i++) {
 					strcpy(file_name, get_path_of_file(i + 1 + page * 25));
 					if ((fp = fopen(file_name, "rb")) == NULL) {
 						printf("--main_screen--\n파일 읽기 오류!\n");
@@ -169,9 +169,9 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 			}
 			printf("\n");
 			char de[3][5] = {
-				{"번호"},
-				{"제목"},
-				{"날짜"}
+				{ "번호" },
+				{ "제목" },
+				{ "날짜" }
 			};
 			printf("%5s%2c%45s%55c%15s\n", de[0], '|', de[1], '|', de[2]);	//틀 만듦
 			for (int i = 0; i < 140; i++) {
@@ -195,72 +195,72 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 			printf("\n\n\t\t\t\t\t\t\t[현재 페이지 : %d]\n\n\t이전 : [\t다음 : ]\t만들기 : z\t읽기 : x\t삭제 : c\t초기화 : v\t종료 : b\n", page + 1);
 			Isclear = 0;
 		}
-		c=getch();	//문자를 입력받음
-		char comment[6] = {'[', ']', 'z', 'x', 'c', 'v'};
+		c = getch();	//문자를 입력받음
+		char comment[6] = { '[', ']', 'z', 'x', 'c', 'v' };
 		switch (c)
 		{
-			case '[':	//이전으로 넘어감
-				if (page == 0) {	//page가 0이라면
-					printf("마지막 페이지입니다.\n");
-					continue;
+		case '[':	//이전으로 넘어감
+			if (page == 0) {	//page가 0이라면
+				printf("마지막 페이지입니다.\n");
+				continue;
+			}
+			else
+			{
+				page--;
+				Isclear = 1;
+				continue;
+			}
+		case ']':	//다음으로 넘어감
+			if (file_count_func(folder_path) <= 25 * (page + 1)) {	//최대 파일 개수가 page + 1에 25를 곱한 값보다 작거나 같다면
+				printf("더이상 넘길 수 없습니다.\n");
+				continue;
+			}
+			else
+			{
+				page++;
+				Isclear = 1;
+				continue;
+			}
+		case 'z':	//일기를 만듦
+			system("cls");
+			printf("\t일기장을 만듭니다.\n\n\t주의 : 작성 중 프로그램을 끄지마세요!\n\n\t중간에 끄면 파일 작성이 안됩니다!\n\n");
+			write_file();
+			Isclear = 1;
+			continue;
+		case 'x':	//읽기
+			printf("\n현재 페이지에서 읽고 싶은 파일 번호를 입력하시오 (1~25) (0 : 취소) : ");
+			int input_number = 0;
+			while (1)
+			{
+				scanf("%d", &input_number);
+				if (input_number <= file_count_func(folder_path) && input_number > 0) {	//만약 입력한 숫자가 폴더 내에 있는 파일 숫자보다 작거나 같다면
+					file_read(input_number + 25 * page);	//파일을 읽는 함수 호출
+					break;
+				}
+				else if (input_number == 0) {
+					break;
 				}
 				else
 				{
-					page--;
-					Isclear = 1;
+					printf("%d보다 같거나  작은 수(양수)를 입력해주세요. >> ", file_count_func(folder_path));
 					continue;
 				}
-			case ']':	//다음으로 넘어감
-				if (file_count_func(folder_path) <= 25 * (page + 1)) {	//최대 파일 개수가 page + 1에 25를 곱한 값보다 작거나 같다면
-					printf("더이상 넘길 수 없습니다.\n");
-					continue;
-				}
-				else
-				{
-					page++;
-					Isclear = 1;
-					continue;
-				}
-			case 'z':	//일기를 만듦
-				system("cls");
-				printf("\t일기장을 만듭니다.\n\n\t주의 : 작성 중 프로그램을 끄지마세요!\n\n\t중간에 끄면 파일 작성이 안됩니다!\n\n");
-				write_file();
-				Isclear = 1;
-				continue;
-			case 'x':	//읽기
-				printf("\n현재 페이지에서 읽고 싶은 파일 번호를 입력하시오 (1~25) (0 : 취소) : ");
-				int input_number = 0;
-				while (1)
-				{
-					scanf("%d", &input_number);
-					if (input_number <= file_count_func(folder_path) && input_number > 0) {	//만약 입력한 숫자가 폴더 내에 있는 파일 숫자보다 작거나 같다면
-						file_read(input_number + 25 * page);	//파일을 읽는 함수 호출
-						break;
-					}
-					else if (input_number == 0) {
-						break;
-					}
-					else
-					{
-						printf("%d보다 같거나  작은 수(양수)를 입력해주세요. >> ", file_count_func(folder_path));
-						continue;
-					} 
-				}
-				Isclear = 1;
-				continue;
-			case 'c':	//삭제
-				remove_file();
-				Isclear = 1;
-				continue;
-			case 'v':	//초기화 
-				page = 0;
-				Isclear = 1;
-				system("mode con cols=141 lines=40");
-				continue;
-			case 'b':	//종료
-				return ;
-			default : //나머지
-				continue;
+			}
+			Isclear = 1;
+			continue;
+		case 'c':	//삭제
+			remove_file();
+			Isclear = 1;
+			continue;
+		case 'v':	//초기화 
+			page = 0;
+			Isclear = 1;
+			system("mode con cols=141 lines=40");
+			continue;
+		case 'b':	//종료
+			return;
+		default: //나머지
+			continue;
 		}
 	}
 }
@@ -294,7 +294,7 @@ void file_read(int file_number) {	//일기장 (파일)을 읽는 함수
 	print_line();
 	printf("%s\n", (f_s.Iscorrect == 0) ? "수정되지 않은 글입니다." : "수정된 글입니다.");	//(f_s.Iscorrect == 0)가 참이면 "수정되지 않은 글입니다."라는 문자열을 출력을 거짓이면 "수정된 글입니다."라는 문자열을 출력한다
 	print_line();
-	printf("\t%s : %c\t%s : %c\n", "나가기", 'o', "수정", 'p'); 
+	printf("\t%s : %c\t%s : %c\n", "나가기", 'o', "수정", 'p');
 	char input_key;
 	while (1)
 	{
@@ -304,7 +304,7 @@ void file_read(int file_number) {	//일기장 (파일)을 읽는 함수
 		case 'o':	//수정에서 나가는 키
 			return;
 		case 'p':	//수정하는 키
-			printf("수정을 합니다.\n"); 
+			printf("수정을 합니다.\n");
 			correct_file(file_number);
 			return 0;
 		}
@@ -323,7 +323,7 @@ void correct_file(int file_number) {	//파일 수정 함수
 	int prority_number;
 	int skip_count = 0;;
 	strcpy(p, get_path_of_file(file_number));
-	if((fp = fopen(p, "rb"))==NULL){
+	if ((fp = fopen(p, "rb")) == NULL) {
 		printf("수정하려는 파일을 읽기를 실패하였습니다.\n");
 		exit(1);
 	}
@@ -408,7 +408,7 @@ void remove_file() {	//파일 삭제 함수
 			f_n[strlen(file_sample.title)] = '\0';
 			printf("일기 제목이 \"%s\"맞습니까? (y/n) : ", f_n);
 			free(f_n);
-			short i = 0;	
+			short i = 0;
 			while (i == 0)	//y나 n을 누를 때까지 반복
 			{
 				input_char = getch();
@@ -439,7 +439,7 @@ void remove_file() {	//파일 삭제 함수
 				}
 			}
 		}
-		else if(input_int == 0)
+		else if (input_int == 0)
 		{
 			printf("다시 돌아갑니다...\n");
 			return;
@@ -466,7 +466,7 @@ int ditect_multiple_file_name(char *txt_file_name) {//파일 중복 검출하는
 		printf("오류\n파일 없음\n");
 		return;
 	}
-	while (r != -1) {	
+	while (r != -1) {
 		if (strcmp(fd.name, ".") != 0 && strcmp(fd.name, "..") != 0) {
 			if (strcmp(txt_file_name, fd.name) == 0) {	//파일명이 매개변수 txt_file_name과 같다면
 				result_int = 0;	//result_int는 0
@@ -479,7 +479,7 @@ int ditect_multiple_file_name(char *txt_file_name) {//파일 중복 검출하는
 }
 
 void array_setup(int delete_file_number) {//우선 순위를 다시 정렬시킴. 삭제할 때 쓰임.
-	FILE *fp; 
+	FILE *fp;
 	struct date d;
 	FILE_SAMPLE f_s;
 	int I_s = 0;
@@ -542,7 +542,7 @@ void write_file() {	//일기장(파일) 생성하는 함수
 			Sleep(1000);
 			cut++;
 		}
-		else if(Ismultiple == -1){
+		else if (Ismultiple == -1) {
 			cut = 0;
 		}
 	}
@@ -554,7 +554,7 @@ void write_file() {	//일기장(파일) 생성하는 함수
 	else
 	{
 		write_f_s.prority = file_count_func(folder_path) + 1;
-	}  
+	}
 	printf("제목을 입력해주세요.( 처음 엔터 누르면 안넘어감. | 100자 이하 | 0 : 메인화면으로 )\n제목 : ");
 	fgets(write_title, 100, stdin);
 	while (write_title[0] == '\n') fgets(write_title, 100, stdin);
@@ -569,7 +569,7 @@ void write_file() {	//일기장(파일) 생성하는 함수
 	strcpy(write_f_s.content, write_content);
 	int i;
 	char path_[50];
-	write_f_s.Iscorrect = 0; 
+	write_f_s.Iscorrect = 0;
 	write_f_s.file_crate_date.year = t->tm_year + 1900;
 	write_f_s.file_crate_date.month = t->tm_mon + 1;
 	write_f_s.file_crate_date.day = t->tm_mday;
