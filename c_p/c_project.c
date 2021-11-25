@@ -33,7 +33,7 @@ void file_read(int file_number);
 void write_file();
 const char* get_path_of_file(int input);
 void correct_file(int file_number);
-void remove_file();
+void remove_file(int page, int listnum);
 void array_setup(int delete_file_number);
 void print_line();
 
@@ -137,16 +137,15 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 	FILE_SAMPLE read_f_s;
 	char c;	//입력받게 하는 문자
 	int page = 0;
+	int se_nu = 0;	//숫자를 다시 셋팅하는 정수
 	while (1)
 	{
 		int file_total_number = file_count_func(folder_path);
 		if (Isclear)
 		{
 			system("cls");	//cmd창을 비움
-			int se_nu = 0;	//숫자를 다시 셋팅하는 정수
-
 			if (file_total_number >= 25 * (page + 1)) {	//만약 파일 최대 숫자가 page + 1에 25를 곱한 수보다 크거나 같다면
-				se_nu = 25 * (page + 1) ;	//se_nu는 page + 1에서 25 곱한 값이다.
+				se_nu = 25 * (page + 1);	//se_nu는 page + 1에서 25 곱한 값이다.
 			}
 			else
 			{
@@ -180,7 +179,7 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 			printf("\n");
 			for (int i = 0; i < se_nu; i++) {//문자열 나열 시작
 				printf("%4d%3c ", data[i].id, '|');
-				for (int j = 0; j < 99; j++) {
+				for (int j = 0; j < 98; j++) {
 					if (strlen(data[i].title) > j) {
 						if (data[i].title[j] != '\n')
 							printf("%c", data[i].title[j]);
@@ -233,23 +232,24 @@ void main_screen() {	//시작 후 일기장을 보여주는 함수
 			while (1)
 			{
 				scanf("%d", &input_number);
-				if (input_number <= file_count_func(folder_path) && input_number > 0) {	//만약 입력한 숫자가 폴더 내에 있는 파일 숫자보다 작거나 같다면
+				if (input_number<= se_nu && input_number > 0) {	//만약 입력한 숫자가 폴더 내에 있는 파일 숫자보다 작거나 같다면
 					file_read(input_number + 25 * page);	//파일을 읽는 함수 호출
 					break;
 				}
 				else if (input_number == 0) {
+					rewind(stdin);	//만약 숫자가 아닌 문자를 입력할 수 있어 입력 버퍼를 지운다.
 					break;
 				}
 				else
 				{
-					printf("%d보다 같거나  작은 수(양수)를 입력해주세요. >> ", file_count_func(folder_path));
+					printf("%d보다 같거나  작은 수(양수)를 입력해주세요. >> ", se_nu);
 					continue;
 				}
 			}
 			Isclear = 1;
 			continue;
 		case 'c':	//삭제
-			remove_file();
+			remove_file(page, se_nu);
 			Isclear = 1;
 			continue;
 		case 'v':	//초기화 
@@ -382,7 +382,7 @@ const char* get_path_of_file(int input) {	//파일 경로만들어주는 함수
 	return path_for_file;
 }
 
-void remove_file() {	//파일 삭제 함수
+void remove_file(int page, int listNum) {	//파일 삭제 함수
 	int input_int = 0;
 	char input_char = { 0 };
 	char path[50];
@@ -394,8 +394,8 @@ void remove_file() {	//파일 삭제 함수
 	while (Isdone == 0) {
 		scanf("%d", &input_int);
 		print_line();
-		if (input_int <= file_count_func(folder_path) && input_int > 0) {
-			strcpy(path, get_path_of_file(input_int));
+		if (input_int <= listNum && input_int > 0) {
+			strcpy(path, get_path_of_file(input_int + 25 * (page)));
 			if ((fp = fopen(path, "rb")) == NULL) {
 				printf("remove_file()\n파일을 삭제하려는 동안 오류가 발생하였습니다!\n");
 				exit(1);
@@ -442,10 +442,11 @@ void remove_file() {	//파일 삭제 함수
 		else if (input_int == 0)
 		{
 			printf("다시 돌아갑니다...\n");
+			rewind(stdin);
 			return;
 		}
 		else {
-			printf("%d보다 같거나  작은 수(양수)를 입력해주세요 >> ", file_count_func(folder_path));
+			printf("%d보다 같거나  작은 수(양수)를 입력해주세요 >> ", listNum);
 		}
 	}
 	return;
