@@ -393,6 +393,7 @@ void remove_file(int page, int listNum) {	//파일 삭제 함수
 	printf("\n삭제하려는 파일의 번호를 입력해주세요. (0 : 취소)");
 	while (Isdone == 0) {
 		scanf("%d", &input_int);
+		rewind(stdin);	//만약 숫자가 아닌 문자를 입력할 수 있어 입력 버퍼를 지운다.
 		print_line();
 		if (input_int <= listNum && input_int > 0) {
 			strcpy(path, get_path_of_file(input_int + 25 * (page)));
@@ -414,10 +415,10 @@ void remove_file(int page, int listNum) {	//파일 삭제 함수
 				input_char = getch();
 				if (input_char == 'y') {
 					char path[50];
-					strcpy(path, get_path_of_file(input_int));
+					strcpy(path, get_path_of_file(input_int + 25 * (page)));
 					int result = remove(path);
 					if (result == 0) {	//파일 삭제 성공시
-						array_setup(input_int);
+						array_setup(input_int + 25 * (page));
 						printf("\n%s\n파일을 삭제 성공했습니다...\n", path);
 						printf("메인화면으로 돌아갑니다...\n");
 						Sleep(1500);
