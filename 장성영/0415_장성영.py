@@ -54,3 +54,9 @@ while i < 10:
     print("{0} * {1} = {2}".format(dan, i,dan * i))
     i += 1
 """
+
+#별 출력
+"""i = 1
+while i <= 5:
+    print("*" * i)
+    i+= 1"""
