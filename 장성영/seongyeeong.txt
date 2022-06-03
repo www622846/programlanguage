@@ -1,0 +1,5 @@
+TensorFlow is a free and open-source software library for machine learning and artificial intelligence. It can be used across a range of tasks but has a particular focus on training and inference of deep neural networks.[4][5]
+
+TensorFlow was developed by the Google Brain team for internal Google use in research and production.[6][7][8] The initial version was released under the Apache License 2.0 in 2015.[1][9] Google released the updated version of TensorFlow, named TensorFlow 2.0, in September 2019.[10]
+
+TensorFlow can be used in a wide variety of programming languages, most notably Python, as well as Javascript, C++, and Java.[11] This flexibility lends itself to a range of applications in many different sectors.
